@@ -1,0 +1,9 @@
+npm install body-parser cors express mongoose nodemon
+
+add "type": "module" to index.js
+
+change "test" to "start" : "nodemon index.js"
+
+npm install dotenv --save
+
+create shared cluster on atlas
