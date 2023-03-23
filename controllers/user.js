@@ -20,13 +20,18 @@ export const createUser = async (req, res) => {
 };
 
 export const fetchUser = async (req, res) => {
-  const { userId } = req.params;
+  const { creator } = req.params;
   try {
-    const currentUser = await userInfo.findOne({ userId: userId });
+    const currentUser = await userInfo.findOne({ _id: creator });
     res.status(200).json(currentUser);
   } catch (error) {
     console.log({ message: "no user" });
   }
+};
+
+export const fetchUserId = async (req, res) => {
+  const { _id } = await userInfo.findOne({ userId: req.userId });
+  res.json(_id);
 };
 
 // export const createUser = async (req, res) => {
