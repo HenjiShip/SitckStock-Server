@@ -2,14 +2,10 @@ import mongoose from "mongoose";
 const { Schema } = mongoose;
 
 const postSchema = mongoose.Schema({
-  _id: {
-    type: Schema.Types.ObjectId,
-    default: () => new mongoose.Types.ObjectId(),
-  },
   title: String,
   message: String,
   name: String,
-  creator: String,
+  userId: { type: String, select: false },
   tags: [String],
   selectedFile: String,
   likes: {
@@ -20,6 +16,8 @@ const postSchema = mongoose.Schema({
     type: Date,
     default: new Date(),
   },
+  creator: { type: Schema.Types.ObjectId },
+  creatorFiller: { type: Schema.Types.ObjectId, ref: "userInfo"},
 });
 
 const PostMessage = mongoose.model("PostMessage", postSchema);
