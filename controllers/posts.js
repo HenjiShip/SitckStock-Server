@@ -3,7 +3,6 @@ import PlayList from "../models/playList.js";
 import mongoose from "mongoose";
 import userInfo from "../models/userInfo.js";
 
-
 export const getPosts = async (req, res) => {
   // const { page } = req.query;
   const posts = await PostMessage.find().populate("creatorFiller");
@@ -154,14 +153,14 @@ export const deletePost = async (req, res) => {
     if (post) {
       await PostMessage.findByIdAndRemove(id);
 
-      // const playlists = await PlayList.find({ posts: id });
-      // playlists.forEach(async (playlist) => {
-      //   const index = playlist.posts.indexOf(id);
-      //   if (index > -1) {
-      //     playlist.posts.splice(index, 1);
-      //     await playlist.save();
-      //   }
-      // });
+      const playlists = await PlayList.find({ posts: id });
+      playlists.forEach(async (playlist) => {
+        const index = playlist.posts.indexOf(id);
+        if (index > -1) {
+          playlist.posts.splice(index, 1);
+          await playlist.save();
+        }
+      });
       // this code was used to update playlists on deletion but i switched over to using change streams
 
       res.json({ message: "deleted" });
