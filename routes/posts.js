@@ -7,6 +7,7 @@ import {
   fetchLikeList,
   fetchUserPosts,
   deletePost,
+  updatePost,
 } from "../controllers/posts.js";
 import auth from "../middleware/auth.js";
 
@@ -19,5 +20,6 @@ router.get("/post/:postId", getSinglePost);
 router.patch("/:id/likePost", auth, likePost);
 router.get("/user/uploaded/:id", fetchUserPosts);
 router.delete("/delete/:id", auth, deletePost);
+router.patch("/update/:id", auth, updatePost);
 
 export default router;

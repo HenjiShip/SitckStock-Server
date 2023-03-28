@@ -16,7 +16,9 @@ const postSchema = mongoose.Schema({
     type: Date,
     default: new Date(),
   },
-  creator: { type: Schema.Types.ObjectId, ref: "userInfo" },
+
+  creator: { type: Schema.Types.ObjectId },
+  creatorFiller: { type: Schema.Types.ObjectId, ref: "userInfo"},
 });
 
 const PostMessage = mongoose.model("PostMessage", postSchema);

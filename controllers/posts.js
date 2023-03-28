@@ -4,14 +4,27 @@ import mongoose from "mongoose";
 import userInfo from "../models/userInfo.js";
 
 export const getPosts = async (req, res) => {
-  // const { page } = req.query;
-  const posts = await PostMessage.find().populate("creator");
+  const { page } = req.query;
+  const LIMIT = 8;
+  const startIndex = (Number(page) - 1) * LIMIT;
+  const total = await PostMessage.countDocuments({});
+
+  const posts = await PostMessage.find()
+    .sort({ _id: -1 })
+    .limit(LIMIT)
+    .skip(startIndex)
+    .populate("creatorFiller");
+
   try {
-    res.status(200).json(posts);
+    res.status(200).json({
+      data: posts,
+      numberOfPages: Math.ceil(total / LIMIT),
+    });
   } catch (error) {
     console.log(error);
   }
 };
+
 export const createPost = async (req, res) => {
   const post = req.body;
 
@@ -22,6 +35,7 @@ export const createPost = async (req, res) => {
       ...post,
       userId: req.userId,
       creator: uniqueCreatorId._id,
+      creatorFiller: uniqueCreatorId._id,
       createdAt: new Date().toISOString(),
     });
     await newPost.save();
@@ -38,7 +52,7 @@ export const createPost = async (req, res) => {
 export const getSinglePost = async (req, res) => {
   const { postId } = req.params;
   try {
-    const post = await PostMessage.findById(postId).populate("creator");
+    const post = await PostMessage.findById(postId).populate("creatorFiller");
 
     res.status(200).json(post);
   } catch (error) {
@@ -85,7 +99,9 @@ export const likePost = async (req, res) => {
 
   const updatedPost = await PostMessage.findByIdAndUpdate(id, post, {
     new: true,
-  });
+  }).populate("creatorFiller");
+  // in the future, rather than sending a response back, i should just update whether it's liked or not visually on the front end only so its more snappy with the likes update. So basically update it on both the front end state as well as the backend.
+
   res.json(updatedPost);
 };
 
@@ -93,10 +109,10 @@ export const createLikeList = async (req, res, creator, postId) => {
   const likedList = new PlayList({
     name: "Likes",
     creator: creator,
+    creatorFiller: creator,
     posts: [postId],
   });
-
-  likedList.save();
+  await likedList.save();
 };
 // for user created playlists, i can probably prompt the user to enter a playlist title and send it here in place of name instead of "Likes" and create new playlists that way
 
@@ -149,14 +165,14 @@ export const deletePost = async (req, res) => {
     if (post) {
       await PostMessage.findByIdAndRemove(id);
 
-      // const playlists = await PlayList.find({ posts: id });
-      // playlists.forEach(async (playlist) => {
-      //   const index = playlist.posts.indexOf(id);
-      //   if (index > -1) {
-      //     playlist.posts.splice(index, 1);
-      //     await playlist.save();
-      //   }
-      // });
+      const playlists = await PlayList.find({ posts: id });
+      playlists.forEach(async (playlist) => {
+        const index = playlist.posts.indexOf(id);
+        if (index > -1) {
+          playlist.posts.splice(index, 1);
+          await playlist.save();
+        }
+      });
       // this code was used to update playlists on deletion but i switched over to using change streams
 
       res.json({ message: "deleted" });
@@ -167,3 +183,21 @@ export const deletePost = async (req, res) => {
     console.log(error);
   }
 };
+
+export const updatePost = async (req, res) => {
+  const { id } = req.params;
+  const post = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(id))
+    return res.status(404).send("No post with that id");
+
+  try {
+    await PostMessage.findOneAndUpdate({ _id: id, userId: req.userId }, post, {
+      new: true,
+    });
+  } catch (error) {
+    console.log("Broke");
+  }
+};
+
+// this project will use "https://cloudinary.com/documentation/node_integration" to make querying posts much faster
