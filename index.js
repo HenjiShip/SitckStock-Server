@@ -7,7 +7,10 @@ import dotenv from "dotenv";
 import postRoutes from "./routes/posts.js";
 import userRoutes from "./routes/user.js";
 
+
 // import { deletionChanges } from "./changestreams/changestreams.js";
+
+
 
 const app = express();
 dotenv.config();
