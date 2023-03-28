@@ -61,7 +61,7 @@ export const createPost = async (req, res) => {
 
     const newPost = new PostMessage({
       ...post,
-      selectedFile: cloudinaryRes.secure_url,
+      selectedFile: "",
       userId: req.userId,
       creator: uniqueCreatorId._id,
       creatorFiller: uniqueCreatorId._id,
