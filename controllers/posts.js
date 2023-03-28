@@ -55,7 +55,7 @@ export const createPost = async (req, res) => {
   const post = req.body;
 
   try {
-    const cloudinaryRes = await cloudinary.uploader.upload(post.selectedFile);
+    let cloudinaryRes = await cloudinary.uploader.upload(post.selectedFile);
 
     const uniqueCreatorId = await userInfo.findOne({ userId: req.userId });
 
@@ -69,11 +69,20 @@ export const createPost = async (req, res) => {
     });
     await newPost.save();
 
-    cloudinary.uploader.rename(cloudinaryRes.public_id, newPost._id.toString());
+    await cloudinary.uploader.rename(
+      cloudinaryRes.public_id,
+      newPost._id.toString()
+    );
+    cloudinaryRes = await cloudinary.api.resource(newPost._id.toString());
+
+    newPost.selectedFile = await cloudinaryRes.secure_url;
+
+    newPost.save();
 
     const responseData = await PostMessage.findById(newPost.id).select(
       "-userId"
     );
+
     res.status(201).json(responseData);
   } catch (error) {
     console.log(error);
@@ -194,7 +203,7 @@ export const deletePost = async (req, res) => {
   try {
     const post = await PostMessage.findOne({ _id: id, userId: req.userId });
     if (post) {
-      const cloudinaryRes = await cloudinary.uploader.destroy(post._id);
+      await cloudinary.uploader.destroy(post._id);
       await PostMessage.findByIdAndRemove(id);
 
       const playlists = await PlayList.find({ posts: id });
