@@ -1,0 +1,21 @@
+# Ignore Node.js dependencies
+node_modules/
+
+# Ignore local development environment variables
+.env
+
+# Ignore logs and build artifacts
+logs/
+dist/
+build/
+
+# Ignore npm debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignore macOS metadata files
+.DS_Store
+
+# Ignore MongoDB data directory
+data/
