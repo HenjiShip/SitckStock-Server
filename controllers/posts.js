@@ -66,7 +66,6 @@ export const likePost = async (req, res) => {
   if (!req.userId) return res.json({ message: "not authenticated" });
 
   const post = await PostMessage.findById(id);
-
   const creatorId = await userInfo.findOne({ userId: req.userId });
   // finding the creator related to the current user
 
