@@ -12,6 +12,7 @@ export const createUser = async (req, res) => {
     };
     const options = { upsert: true, new: true };
     const result = await userInfo.findOneAndUpdate(filter, update, options);
+    result.save()
     res.json(result);
   } catch (error) {
     console.log(error);
