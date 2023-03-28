@@ -4,10 +4,22 @@ import mongoose from "mongoose";
 import userInfo from "../models/userInfo.js";
 
 export const getPosts = async (req, res) => {
-  // const { page } = req.query;
-  const posts = await PostMessage.find().populate("creatorFiller");
+  const { page } = req.query;
+  const LIMIT = 8;
+  const startIndex = (Number(page) - 1) * LIMIT;
+  const total = await PostMessage.countDocuments({});
+
+  const posts = await PostMessage.find()
+    .sort({ _id: -1 })
+    .limit(LIMIT)
+    .skip(startIndex)
+    .populate("creatorFiller");
+
   try {
-    res.status(200).json(posts);
+    res.status(200).json({
+      data: posts,
+      numberOfPages: Math.ceil(total / LIMIT),
+    });
   } catch (error) {
     console.log(error);
   }
@@ -89,6 +101,7 @@ export const likePost = async (req, res) => {
   const updatedPost = await PostMessage.findByIdAndUpdate(id, post, {
     new: true,
   }).populate("creatorFiller");
+  // in the future, rather than sending a response back, i should just update whether it's liked or not visually on the front end only so its more snappy with the likes update. So basically update it on both the front end state as well as the backend.
 
   res.json(updatedPost);
 };
@@ -171,3 +184,21 @@ export const deletePost = async (req, res) => {
     console.log(error);
   }
 };
+
+export const updatePost = async (req, res) => {
+  const { id } = req.params;
+  const post = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(id))
+    return res.status(404).send("No post with that id");
+
+  try {
+    await PostMessage.findOneAndUpdate({ _id: id, userId: req.userId }, post, {
+      new: true,
+    });
+  } catch (error) {
+    console.log("Broke");
+  }
+};
+
+// this project will use "https://cloudinary.com/documentation/node_integration" to make querying posts much faster
