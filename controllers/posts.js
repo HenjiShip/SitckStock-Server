@@ -2,6 +2,32 @@ import PostMessage from "../models/postMessage.js";
 import PlayList from "../models/playList.js";
 import mongoose from "mongoose";
 import userInfo from "../models/userInfo.js";
+import { v2 as cloudinary } from "cloudinary";
+import dotenv from "dotenv";
+
+dotenv.config();
+// Configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET,
+});
+
+// Upload
+
+// const res = cloudinary.uploader.upload(
+//   "https://upload.wikimedia.org/wikipedia/commons/a/ae/Olympic_flag.jpg",
+//   { public_id: "olympic_flag" }
+// );
+
+// res
+//   .then((data) => {
+//     console.log(data);
+//     console.log(data.secure_url);
+//   })
+//   .catch((err) => {
+//     console.log(err);
+//   });
 
 export const getPosts = async (req, res) => {
   const { page } = req.query;
@@ -29,10 +55,13 @@ export const createPost = async (req, res) => {
   const post = req.body;
 
   try {
+    let cloudinaryRes = await cloudinary.uploader.upload(post.selectedFile);
+
     const uniqueCreatorId = await userInfo.findOne({ userId: req.userId });
 
     const newPost = new PostMessage({
       ...post,
+      selectedFile: "",
       userId: req.userId,
       creator: uniqueCreatorId._id,
       creatorFiller: uniqueCreatorId._id,
@@ -40,9 +69,20 @@ export const createPost = async (req, res) => {
     });
     await newPost.save();
 
+    await cloudinary.uploader.rename(
+      cloudinaryRes.public_id,
+      newPost._id.toString()
+    );
+    cloudinaryRes = await cloudinary.api.resource(newPost._id.toString());
+
+    newPost.selectedFile = await cloudinaryRes.secure_url;
+
+    newPost.save();
+
     const responseData = await PostMessage.findById(newPost.id).select(
       "-userId"
     );
+
     res.status(201).json(responseData);
   } catch (error) {
     console.log(error);
@@ -161,8 +201,9 @@ export const deletePost = async (req, res) => {
     return res.status(404).send("No post with that ID");
 
   try {
-    const post = await PostMessage.find({ _id: id, userId: req.userId });
+    const post = await PostMessage.findOne({ _id: id, userId: req.userId });
     if (post) {
+      await cloudinary.uploader.destroy(post._id);
       await PostMessage.findByIdAndRemove(id);
 
       const playlists = await PlayList.find({ posts: id });
@@ -196,7 +237,7 @@ export const updatePost = async (req, res) => {
       new: true,
     });
   } catch (error) {
-    console.log("Broke");
+    console.log(error);
   }
 };
 
